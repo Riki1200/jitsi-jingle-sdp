@@ -1,16 +1,17 @@
 use std::io::Cursor;
 
-use jitsi_jingle_sdp::{jingle_to_sdp, sdp_to_jingle, SessionDescription};
+use jitsi_jingle_sdp::SessionDescriptionJingleConversionsExt;
 use jitsi_xmpp_parsers::jingle::{Action, Jingle};
 use minidom::Element;
 use pretty_assertions::assert_eq;
+use sdp::SessionDescription;
 
 #[test]
 fn session_initiate_to_offer() {
   let element: Element = SESSION_INITIATE.parse().unwrap();
   let jingle = Jingle::try_from(element).unwrap();
 
-  let sdp = jingle_to_sdp(&jingle).unwrap();
+  let sdp = SessionDescription::try_from_jingle(&jingle).unwrap();
 
   assert_eq!(OFFER, sdp.marshal());
 }
@@ -18,14 +19,14 @@ fn session_initiate_to_offer() {
 #[test]
 fn answer_to_session_accept() {
   let sdp = SessionDescription::unmarshal(&mut Cursor::new(ANSWER)).unwrap();
-  let jingle = sdp_to_jingle(
-    Action::SessionAccept,
-    "5rpgqh5rbclco",
-    "respectivearticlesholdoverly@conference.avstack.onavstack.net/focus",
-    "f7e91a40-063d-4f11-9423-b31f5228d8e9@avstack.onavstack.net/3GQxy6tBgrIe",
-    &sdp,
-  )
-  .unwrap();
+  let jingle = sdp
+    .try_to_jingle(
+      Action::SessionAccept,
+      "5rpgqh5rbclco",
+      "respectivearticlesholdoverly@conference.avstack.onavstack.net/focus",
+      "f7e91a40-063d-4f11-9423-b31f5228d8e9@avstack.onavstack.net/3GQxy6tBgrIe",
+    )
+    .unwrap();
 
   let element: Element = SESSION_ACCEPT.parse().unwrap();
   let expected_jingle = Jingle::try_from(element).unwrap();
